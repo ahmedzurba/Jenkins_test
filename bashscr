@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# Set the target image version to be upgraded to
+target_image_version="2.4"
+
+# Get the list of all Kubernetes clusters running on the cloud provider
+clusters=$(kubectl config get-contexts -o=name)
+
+# Loop through each cluster
+for cluster in $clusters
+do
+  # Get the Kubernetes version of the cluster
+  k8s_version=$(kubectl version --context=$cluster | grep -oP '(?<=Server Version: ).*')
+
+  # Check if the Kubernetes version is older than 1.16
+  if [[ $(echo $k8s_version | cut -d "." -f2) -lt 16 ]]; then
+    echo "Cluster $cluster is running an older version of Kubernetes ($k8s_version)"
+
+    # Check if the cluster is using the impacted image version 2.3
+    if kubectl get pods --all-namespaces --context=$cluster | grep -q "xyz:$target_image_version"; then
+      echo "Cluster $cluster is using the impacted image version $target_image_version"
+
+      # Upgrade the image version to 2.4 gradually
+      kubectl get pods --all-namespaces --context=$cluster | grep "xyz:$target_image_version" | awk '{print $1 " -n " $2}' | while read line; do
+        pod=$(echo $line | awk '{print $1}')
+        namespace=$(echo $line | awk '{print $2}')
+        echo "Upgrading pod $pod in namespace $namespace to image version $target_image_version"
+        kubectl set image pod/$pod -n $namespace xyz=$target_image_version --context=$cluster
+      done
+    else
+      echo "Cluster $cluster is not using the impacted image version $target_image_version"
+    fi
+  else
+    echo "Cluster $cluster is running a newer version of Kubernetes ($k8s_version)"
+  fi
+done

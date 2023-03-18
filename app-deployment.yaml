@@ -1,0 +1,45 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: suspicious-events-detector
+spec:
+  selector:
+    matchLabels:
+      app: suspicious-events-detector
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: suspicious-events-detector
+    spec:
+      containers:
+        - name: suspicious-events-detector
+          image: ahmedzurba/suspicious-events-detector:latest
+          ports:
+            - containerPort: 8080
+          env:   # Setting Environmental Variables
+            - name: MYSQL_HOST   # Setting Database host address
+              value: mysql
+            - name: MYSQL_DATABASE  # Setting Database name
+              value: detector
+            - name: MYSQL_USERNAME  # Setting Database username
+              value: root
+            - name: MYSQL_PASSWORD # Setting Database password
+              value: root
+            - name: MYSQL_PORT
+              value: '3306'
+---
+# Define a 'Service' To Expose the application
+apiVersion: v1
+kind: Service
+metadata:
+  name: suspicious-events-detector-service
+spec:
+  ports:
+    - protocol: "TCP"
+      port: 8080    
+      targetPort: 8080   
+  selector:
+    app: suspicious-events-detector
+  type: NodePort
