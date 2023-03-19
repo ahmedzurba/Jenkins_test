@@ -1,0 +1,44 @@
+pipeline {
+    agent any
+    
+    environment {
+        registry = 'https://registry.hub.docker.com'
+        dockerImage = ''
+    }
+    stages {
+        stage('clone git rebo') {
+            steps {
+                echo 'clone the github repo'
+                git url: 'https://github.com/ahmedzurba/Jenkins_test', branch: 'main'
+            }
+        }
+        stage('build docker file') {
+            steps {
+                echo 'building the docker image!!'
+                script {
+                    dockerImage = docker.build("ahmedzurba/detector")
+                }
+            }
+        }
+        stage('push to registary') {
+            steps {
+                echo 'building the docker image!!'
+                script {
+                    docker.withRegistry(registry, 'docker_hub') {
+                       dockerImage.push()
+                    }
+                }
+                
+            }
+        }
+        stage('kubectl') {
+            steps {
+                withCredentials([file(credentialsId: 'kube_config', variable: 'KUBECONFIG')]) {
+                    sh "kubectl apply -f mysql-deployment.yaml"
+                    sh "kubectl apply -f app-deployment.yaml"
+                }
+            }
+        }
+    }
+    
+}
