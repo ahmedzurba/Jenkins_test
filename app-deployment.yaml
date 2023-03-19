@@ -42,4 +42,3 @@ spec:
       targetPort: 8080   
   selector:
     app: suspicious-events-detector
-  type: NodePort
