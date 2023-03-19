@@ -1,3 +1,1 @@
 # Jenkins_test
-
-r_pat_GiAIDEE_DQ7YHdyABj2ZYMlnZBw
