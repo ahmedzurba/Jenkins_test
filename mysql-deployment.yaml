@@ -52,7 +52,6 @@ spec:
         app: mysql
         tier: database
     spec:
-      hostname: mysql
       containers:
         - name: mysql
           image: mysql
